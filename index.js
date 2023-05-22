@@ -1,7 +1,11 @@
 const express = require("express");
 var morgan = require("morgan");
 const cors = require("cors");
+require("dotenv").config();
+
 const app = express();
+
+const Person = require("./models/person");
 
 app.use(morgan(":method :url :status - :response-time ms :body"));
 
@@ -13,36 +17,12 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static("dist"));
 
-let persons = [
-  {
-    id: 1,
-    name: "Arto Hellas",
-    number: "040-123456",
-  },
-  {
-    id: 2,
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-  },
-  {
-    id: 3,
-    name: "Dan Abramov",
-    number: "12-43-234345",
-  },
-  {
-    id: 4,
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-  },
-  {
-    id: 5,
-    name: "Bobby Johnson",
-    number: "1234567890",
-  },
-];
+let persons = [];
 
 app.get("/api/persons", (req, res) => {
-  res.json(persons);
+  Person.find({}).then((people) => {
+    res.json(people);
+  });
 });
 
 app.get("/info", (req, res) => {
@@ -82,30 +62,23 @@ app.delete("/api/persons/:id", (req, res) => {
 
 app.post("/api/persons", (req, res) => {
   const body = req.body;
-  const id = Math.floor(Math.random() * 1000) + 5;
 
-  if (!body.name || !body.number) {
-    return res.status(400).json({
-      error: "details missing",
-    });
+  if (body.name === undefined) {
+    return res.status(400).json({ error: "name missing" });
   }
 
-  const exists = persons.find((person) => person.name === body.name);
-  if (exists) {
-    return res.status(400).json({
-      error: "name must be unique",
-    });
+  if (body.number === undefined) {
+    return res.status(400).json({ error: "number missing" });
   }
 
-  const person = {
-    id: id,
+  const person = new Person({
     name: body.name,
     number: body.number,
-  };
+  });
 
-  persons = persons.concat(person);
-
-  res.json(person);
+  person.save().then((savedPerson) => {
+    res.json(savedPerson);
+  });
 });
 
 const PORT = process.env.PORT || 3001;
