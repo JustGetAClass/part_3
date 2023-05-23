@@ -17,6 +17,10 @@ const errorHandler = (error, request, response, next) => {
   next(error);
 };
 
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: "unknown endpoint" });
+};
+
 app.use(morgan(":method :url :status - :response-time ms :body"));
 
 morgan.token("body", function (req, res) {
@@ -36,7 +40,6 @@ app.get("/api/persons", (req, res) => {
 });
 
 app.get("/info", (req, res) => {
-  const personsLength = persons.length;
   const date = new Date();
   const options = {
     weekday: "short",
@@ -46,10 +49,12 @@ app.get("/info", (req, res) => {
     day: "numeric",
   };
 
-  res.send(`<p>Phonebook has info for ${personsLength} people </p>
+  Person.find({}).then((people) => {
+    res.send(`<p>Phonebook has info for ${people.length} people </p>
   <p>${date.toLocaleDateString("en-US", options)} ${date.toLocaleTimeString(
-    "en-US"
-  )}</p>`);
+      "en-US"
+    )}</p>`);
+  });
 });
 
 app.get("/api/persons/:id", (req, res, next) => {
@@ -111,6 +116,7 @@ app.put("/api/persons/:id", (req, res, next) => {
     .catch((error) => next(error));
 });
 
+app.use(unknownEndpoint);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
