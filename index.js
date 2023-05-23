@@ -58,7 +58,7 @@ app.get("/info", (req, res) => {
 });
 
 app.get("/api/persons/:id", (req, res, next) => {
-  Person.findById({ id: req.params.id })
+  Person.findById(req.params.id)
     .then((person) => {
       if (person) {
         res.json(person);
